@@ -166,13 +166,12 @@ public class CustomerController {
     @PostMapping("/profile")
     public String updateProfile(Authentication authentication,
                                @RequestParam String name,
-                               @RequestParam String phone,
                                @RequestParam String email,
                                RedirectAttributes redirectAttributes) {
         try {
             User user = userRepository.findByUsername(authentication.getName())
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-            userService.updateUser(user, name, phone, email);
+            userService.updateUser(user, name, email);
             redirectAttributes.addFlashAttribute("success", "프로필이 업데이트되었습니다.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());

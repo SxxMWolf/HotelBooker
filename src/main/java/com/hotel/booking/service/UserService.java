@@ -17,7 +17,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     
-    public User registerUser(String username, String password, String email, String name, String phone) {
+    public User registerUser(String username, String password, String email, String name) {
         if (userRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
         }
@@ -30,7 +30,6 @@ public class UserService {
                 .password(passwordEncoder.encode(password))
                 .email(email)
                 .name(name)
-                .phone(phone)
                 .role(User.Role.CUSTOMER)
                 .enabled(true)
                 .build();
@@ -48,9 +47,8 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
     
-    public User updateUser(User user, String name, String phone, String email) {
+    public User updateUser(User user, String name, String email) {
         user.setName(name);
-        user.setPhone(phone);
         user.setEmail(email);
         return userRepository.save(user);
     }

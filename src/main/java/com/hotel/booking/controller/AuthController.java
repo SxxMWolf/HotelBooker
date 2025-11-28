@@ -24,10 +24,9 @@ public class AuthController {
                           @RequestParam String password,
                           @RequestParam String email,
                           @RequestParam String name,
-                          @RequestParam(required = false) String phone,
                           RedirectAttributes redirectAttributes) {
         try {
-            userService.registerUser(username, password, email, name, phone);
+            userService.registerUser(username, password, email, name);
             redirectAttributes.addFlashAttribute("success", "회원가입이 완료되었습니다. 로그인해주세요.");
             return "redirect:/login";
         } catch (IllegalArgumentException e) {
