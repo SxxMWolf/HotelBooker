@@ -19,7 +19,7 @@ public class UserService {
     
     public User registerUser(String username, String password, String email, String name, String phone) {
         if (userRepository.existsByUsername(username)) {
-            throw new IllegalArgumentException("이미 사용 중인 사용자명입니다.");
+            throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
         }
         if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
