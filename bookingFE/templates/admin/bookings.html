@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content}, ~{})}">
+<body>
+    <div th:fragment="content">
+        <h2>예약 관리</h2>
+        
+        <div class="bookings-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>예약 ID</th>
+                        <th>고객</th>
+                        <th>객실</th>
+                        <th>체크인</th>
+                        <th>체크아웃</th>
+                        <th>인원</th>
+                        <th>가격</th>
+                        <th>상태</th>
+                        <th>작업</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="booking : ${bookings}">
+                        <td th:text="${booking.bookingId}"></td>
+                        <td th:text="${booking.user.name}"></td>
+                        <td th:text="${booking.room.roomName}"></td>
+                        <td th:text="${#temporals.format(booking.checkInDate, 'yyyy-MM-dd')}"></td>
+                        <td th:text="${#temporals.format(booking.checkOutDate, 'yyyy-MM-dd')}"></td>
+                        <td th:text="${booking.numGuests}"></td>
+                        <td th:text="'₩' + ${#numbers.formatDecimal(booking.totalPrice, 0, 'COMMA', 0, 'POINT')}"></td>
+                        <td th:text="${booking.status}"></td>
+                        <td>
+                            <form th:action="@{/admin/bookings/{id}/status(id=${booking.bookingId})}" method="post" style="display:inline;">
+                                <select name="status" onchange="this.form.submit()">
+                                    <option th:value="PENDING" th:selected="${booking.status.name() == 'PENDING'}">PENDING</option>
+                                    <option th:value="CONFIRMED" th:selected="${booking.status.name() == 'CONFIRMED'}">CONFIRMED</option>
+                                    <option th:value="CHECKED_IN" th:selected="${booking.status.name() == 'CHECKED_IN'}">CHECKED_IN</option>
+                                    <option th:value="CHECKED_OUT" th:selected="${booking.status.name() == 'CHECKED_OUT'}">CHECKED_OUT</option>
+                                    <option th:value="CANCELLED" th:selected="${booking.status.name() == 'CANCELLED'}">CANCELLED</option>
+                                </select>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
+

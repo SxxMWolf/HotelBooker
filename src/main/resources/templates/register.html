@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - 호텔 예약 시스템</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a th:href="@{/}" class="logo">🏨 호텔 예약</a>
+            <ul class="nav-menu">
+                <li><a th:href="@{/}">홈</a></li>
+                <li><a th:href="@{/login}">로그인</a></li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="container">
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+        
+        <div class="auth-container">
+            <h2>회원가입</h2>
+            <form th:action="@{/register}" method="post" class="auth-form">
+                <div class="form-group">
+                    <label>사용자명</label>
+                    <input type="text" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label>비밀번호</label>
+                    <input type="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label>이메일</label>
+                    <input type="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label>이름</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>전화번호</label>
+                    <input type="tel" name="phone">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">회원가입</button>
+            </form>
+            <p class="text-center">
+                이미 계정이 있으신가요? <a th:href="@{/login}">로그인</a>
+            </p>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 호텔 예약 시스템. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content}, ~{})}">
+<body>
+    <div th:fragment="content">
+        <h2>리뷰 작성</h2>
+        
+        <div th:if="${booking}">
+            <div class="booking-info">
+                <p><strong>객실:</strong> <span th:text="${booking.room.roomName}"></span></p>
+                <p><strong>체크인:</strong> <span th:text="${#temporals.format(booking.checkInDate, 'yyyy-MM-dd')}"></span></p>
+                <p><strong>체크아웃:</strong> <span th:text="${#temporals.format(booking.checkOutDate, 'yyyy-MM-dd')}"></span></p>
+            </div>
+            
+            <form th:action="@{/customer/bookings/{id}/review(id=${booking.bookingId})}" method="post" class="review-form">
+                <div class="form-group">
+                    <label>평점</label>
+                    <select name="rating" required>
+                        <option value="5">5점</option>
+                        <option value="4">4점</option>
+                        <option value="3">3점</option>
+                        <option value="2">2점</option>
+                        <option value="1">1점</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>리뷰 내용</label>
+                    <textarea name="comment" rows="5" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">작성</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content}, ~{})}">
+<body>
+    <div th:fragment="content">
+        <h2>리뷰 관리</h2>
+        
+        <div class="reviews-section">
+            <h3>공개 리뷰</h3>
+            <div th:each="review : ${reviews}" class="review-card">
+                <div class="review-header">
+                    <strong th:text="${review.user.name}"></strong>
+                    <span class="rating" th:text="'⭐'.repeat(${review.rating})"></span>
+                    <span th:text="${review.room.roomName}"></span>
+                </div>
+                <p th:text="${review.comment}"></p>
+                <div class="review-actions">
+                    <form th:action="@{/admin/reviews/{id}/visibility(id=${review.reviewId})}" method="post" style="display:inline;">
+                        <input type="hidden" name="visible" value="false">
+                        <button type="submit" class="btn btn-sm btn-danger">숨기기</button>
+                    </form>
+                    <form th:action="@{/admin/reviews/{id}/reply(id=${review.reviewId})}" method="post" style="display:inline;">
+                        <input type="text" name="adminReply" placeholder="답변 작성" required>
+                        <button type="submit" class="btn btn-sm btn-secondary">답변</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="reviews-section">
+            <h3>숨김 리뷰</h3>
+            <div th:each="review : ${hiddenReviews}" class="review-card">
+                <div class="review-header">
+                    <strong th:text="${review.user.name}"></strong>
+                    <span class="rating" th:text="'⭐'.repeat(${review.rating})"></span>
+                </div>
+                <p th:text="${review.comment}"></p>
+                <form th:action="@{/admin/reviews/{id}/visibility(id=${review.reviewId})}" method="post" style="display:inline;">
+                    <input type="hidden" name="visible" value="true">
+                    <button type="submit" class="btn btn-sm btn-primary">공개</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

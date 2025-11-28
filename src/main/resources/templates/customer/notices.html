@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content}, ~{})}">
+<body>
+    <div th:fragment="content">
+        <h2>공지사항</h2>
+        
+        <div class="notices-list">
+            <div th:each="notice : ${notices}" class="notice-card">
+                <h3 th:text="${notice.title}"></h3>
+                <p class="notice-meta">
+                    <span th:text="${notice.noticeType}"></span> |
+                    <span th:text="${#temporals.format(notice.createdAt, 'yyyy-MM-dd')}"></span>
+                </p>
+                <p th:text="${#strings.abbreviate(notice.content, 100)}"></p>
+                <a th:href="@{/customer/notices/{id}(id=${notice.noticeId})}">자세히 보기</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

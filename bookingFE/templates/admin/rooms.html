@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content}, ~{})}">
+<body>
+    <div th:fragment="content">
+        <h2>객실 관리</h2>
+        <a th:href="@{/admin/rooms/new}" class="btn btn-primary">새 객실 추가</a>
+        
+        <div class="rooms-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>객실번호</th>
+                        <th>객실명</th>
+                        <th>타입</th>
+                        <th>최대 인원</th>
+                        <th>가격</th>
+                        <th>상태</th>
+                        <th>작업</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="room : ${rooms}">
+                        <td th:text="${room.roomNumber}"></td>
+                        <td th:text="${room.roomName}"></td>
+                        <td th:text="${room.roomType}"></td>
+                        <td th:text="${room.maxGuests}"></td>
+                        <td th:text="'₩' + ${#numbers.formatDecimal(room.pricePerNight, 0, 'COMMA', 0, 'POINT')}"></td>
+                        <td th:text="${room.status}"></td>
+                        <td>
+                            <a th:href="@{/admin/rooms/{id}/edit(id=${room.roomId})}" class="btn btn-sm btn-secondary">수정</a>
+                            <form th:action="@{/admin/rooms/{id}/delete(id=${room.roomId})}" method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-danger">삭제</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
+

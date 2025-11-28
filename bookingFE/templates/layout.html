@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title != null ? title + ' - 호텔 예약 시스템' : '호텔 예약 시스템'}">호텔 예약 시스템</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a th:href="@{/}" class="logo">🏨 호텔 예약</a>
+            <ul class="nav-menu">
+                <li><a th:href="@{/}">홈</a></li>
+                <li><a th:href="@{/customer/rooms}">객실 예약</a></li>
+                <li><a th:href="@{/customer/bookings}">예약 내역</a></li>
+                <li><a th:href="@{/customer/notices}">공지사항</a></li>
+                <li th:if="${#authentication.authenticated}">
+                    <a th:href="@{/customer/profile}">프로필</a>
+                </li>
+                <li th:if="${#authentication.authorities}('ROLE_ADMIN')">
+                    <a th:href="@{/admin/dashboard}">관리자</a>
+                </li>
+                <li th:if="${!#authentication.authenticated}">
+                    <a th:href="@{/login}">로그인</a>
+                </li>
+                <li th:if="${!#authentication.authenticated}">
+                    <a th:href="@{/register}">회원가입</a>
+                </li>
+                <li th:if="${#authentication.authenticated}">
+                    <form th:action="@{/logout}" method="post" style="display:inline;">
+                        <button type="submit" class="btn-link">로그아웃</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="container">
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+        
+        <div th:replace="${content}"></div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 호텔 예약 시스템. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>
+

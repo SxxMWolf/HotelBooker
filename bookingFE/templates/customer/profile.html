@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content}, ~{})}">
+<body>
+    <div th:fragment="content">
+        <h2>프로필</h2>
+        
+        <form th:action="@{/customer/profile}" method="post" class="profile-form">
+            <div class="form-group">
+                <label>사용자명</label>
+                <input type="text" th:value="${user.username}" disabled>
+            </div>
+            <div class="form-group">
+                <label>이름</label>
+                <input type="text" name="name" th:value="${user.name}" required>
+            </div>
+            <div class="form-group">
+                <label>이메일</label>
+                <input type="email" name="email" th:value="${user.email}" required>
+            </div>
+            <div class="form-group">
+                <label>전화번호</label>
+                <input type="tel" name="phone" th:value="${user.phone}">
+            </div>
+            <button type="submit" class="btn btn-primary">수정</button>
+        </form>
+    </div>
+</body>
+</html>
+

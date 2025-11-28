@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content}, ~{})}">
+<body>
+    <div th:fragment="content">
+        <h2>공지사항 관리</h2>
+        <a th:href="@{/admin/notices/new}" class="btn btn-primary">새 공지사항</a>
+        
+        <div class="notices-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>제목</th>
+                        <th>타입</th>
+                        <th>생성일</th>
+                        <th>공개</th>
+                        <th>작업</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="notice : ${notices}">
+                        <td th:text="${notice.title}"></td>
+                        <td th:text="${notice.noticeType}"></td>
+                        <td th:text="${#temporals.format(notice.createdAt, 'yyyy-MM-dd')}"></td>
+                        <td th:text="${notice.visible ? '예' : '아니오'}"></td>
+                        <td>
+                            <a th:href="@{/admin/notices/{id}/edit(id=${notice.noticeId})}" class="btn btn-sm btn-secondary">수정</a>
+                            <form th:action="@{/admin/notices/{id}/delete(id=${notice.noticeId})}" method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-danger">삭제</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
+

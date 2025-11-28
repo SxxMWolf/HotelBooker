@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content}, ~{})}">
+<body>
+    <div th:fragment="content">
+        <div th:if="${room}">
+            <div class="room-detail">
+                <img th:src="${room.imageUrl != null ? room.imageUrl : '/images/default-room.jpg'}" 
+                     th:alt="${room.roomName}" class="room-image-large">
+                
+                <div class="room-detail-info">
+                    <h2 th:text="${room.roomName}"></h2>
+                    <p class="room-type" th:text="${room.roomType}"></p>
+                    <p th:text="${room.description}"></p>
+                    
+                    <div class="room-specs">
+                        <p><strong>최대 인원:</strong> <span th:text="${room.maxGuests}"></span>명</p>
+                        <p><strong>가격:</strong> <span class="price" th:text="'₩' + ${#numbers.formatDecimal(room.pricePerNight, 0, 'COMMA', 0, 'POINT')} + '/박'"></span></p>
+                        <p><strong>편의시설:</strong> <span th:text="${room.amenities}"></span></p>
+                        <p><strong>상태:</strong> <span th:text="${room.status}"></span></p>
+                    </div>
+                    
+                    <form th:action="@{/customer/bookings}" method="post" class="booking-form">
+                        <input type="hidden" name="roomId" th:value="${room.roomId}">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>체크인</label>
+                                <input type="date" name="checkInDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label>체크아웃</label>
+                                <input type="date" name="checkOutDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label>인원</label>
+                                <input type="number" name="numGuests" min="1" th:max="${room.maxGuests}" value="2" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>요청사항</label>
+                            <textarea name="specialRequests" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">예약하기</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="reviews-section">
+                <h3>리뷰</h3>
+                <div th:each="review : ${reviews}" class="review-card">
+                    <div class="review-header">
+                        <strong th:text="${review.user.name}"></strong>
+                        <span class="rating" th:text="'⭐'.repeat(${review.rating})"></span>
+                    </div>
+                    <p th:text="${review.comment}"></p>
+                    <p class="review-date" th:text="${#temporals.format(review.reviewDate, 'yyyy-MM-dd')}"></p>
+                    <div th:if="${review.adminReply}" class="admin-reply">
+                        <strong>관리자 답변:</strong>
+                        <p th:text="${review.adminReply}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

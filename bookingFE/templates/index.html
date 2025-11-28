@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>호텔 예약 시스템</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a th:href="@{/}" class="logo">🏨 호텔 예약</a>
+            <ul class="nav-menu">
+                <li><a th:href="@{/}">홈</a></li>
+                <li><a th:href="@{/customer/rooms}">객실 예약</a></li>
+                <li th:if="${#authentication != null && #authentication.authenticated}">
+                    <a th:href="@{/customer/bookings}">예약 내역</a>
+                </li>
+                <li><a th:href="@{/customer/notices}">공지사항</a></li>
+                <li th:if="${#authentication != null && #authentication.authenticated}">
+                    <a th:href="@{/customer/profile}">프로필</a>
+                </li>
+                <li th:if="${#authentication != null && #authentication.authorities.?[authority == 'ROLE_ADMIN']}">
+                    <a th:href="@{/admin/dashboard}">관리자</a>
+                </li>
+                <li th:if="${#authentication == null || !#authentication.authenticated}">
+                    <a th:href="@{/login}">로그인</a>
+                </li>
+                <li th:if="${#authentication == null || !#authentication.authenticated}">
+                    <a th:href="@{/register}">회원가입</a>
+                </li>
+                <li th:if="${#authentication != null && #authentication.authenticated}">
+                    <form th:action="@{/logout}" method="post" style="display:inline;">
+                        <button type="submit" class="btn-link">로그아웃</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="container">
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+        
+        <section class="hero">
+            <h1>환영합니다</h1>
+            <p>편안하고 아늑한 휴식을 만나보세요</p>
+            <a th:href="@{/customer/rooms}" class="btn btn-primary">객실 예약하기</a>
+        </section>
+        
+        <section class="promotions">
+            <h2>프로모션</h2>
+            <div class="notice-list">
+                <div th:each="notice : ${notices}" class="notice-card" 
+                     th:if="${notice.noticeType.name() == 'PROMOTION' || notice.noticeType.name() == 'EVENT'}">
+                    <h3 th:text="${notice.title}"></h3>
+                    <p th:text="${notice.content}"></p>
+                    <a th:href="@{/customer/notices/{id}(id=${notice.noticeId})}">자세히 보기</a>
+                </div>
+            </div>
+        </section>
+        
+        <section class="rooms-preview">
+            <h2>인기 객실</h2>
+            <div class="room-grid">
+                <div th:each="room : ${rooms}" class="room-card">
+                    <img th:src="${room.imageUrl != null ? room.imageUrl : '/images/default-room.jpg'}" 
+                         th:alt="${room.roomName}">
+                    <div class="room-info">
+                        <h3 th:text="${room.roomName}"></h3>
+                        <p th:text="${room.description}"></p>
+                        <p class="price" th:text="'₩' + ${#numbers.formatDecimal(room.pricePerNight, 0, 'COMMA', 0, 'POINT')} + '/박'"></p>
+                        <a th:href="@{/customer/rooms/{id}(id=${room.roomId})}" class="btn btn-secondary">상세보기</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 호텔 예약 시스템. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>
