@@ -72,15 +72,27 @@ export const roomAPI = {
     return api.get('/rooms', { params });
   },
   getById: (id) => api.get(`/rooms/${id}`),
-  getByType: (type) => api.get(`/rooms/type/${type}`),
-  getByTypeAndViewType: (type, viewType) => api.get(`/rooms/type/${type}/view/${viewType}`),
+  getByType: (type, checkInDate, checkOutDate) => {
+    const params = {};
+    if (checkInDate) params.checkInDate = checkInDate;
+    if (checkOutDate) params.checkOutDate = checkOutDate;
+    return api.get(`/rooms/type/${type}`, { params });
+  },
+  getByTypeAndViewType: (type, viewType, checkInDate, checkOutDate) => {
+    const params = {};
+    if (checkInDate) params.checkInDate = checkInDate;
+    if (checkOutDate) params.checkOutDate = checkOutDate;
+    return api.get(`/rooms/type/${type}/view/${viewType}`, { params });
+  },
 };
 
 export const bookingAPI = {
   create: (data) => api.post('/bookings', data),
   getAll: () => api.get('/bookings'),
   getById: (id) => api.get(`/bookings/${id}`),
+  getReviewable: () => api.get('/bookings/reviewable'),
   cancel: (id) => api.delete(`/bookings/${id}`),
+  delete: (id) => api.delete(`/bookings/delete/${id}`),
 };
 
 export const paymentAPI = {
@@ -91,6 +103,7 @@ export const paymentAPI = {
 
 export const reviewAPI = {
   create: (data) => api.post('/reviews', data),
+  update: (id, data) => api.put(`/reviews/${id}`, data),
   getByRoomId: (roomId) => api.get(`/reviews/room/${roomId}`),
   getMyReviews: () => api.get('/reviews/my'),
 };

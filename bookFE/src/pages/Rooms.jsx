@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { roomAPI, reviewAPI } from '../services/api';
 
@@ -12,13 +12,12 @@ const Rooms = () => {
   const [availableRooms, setAvailableRooms] = useState([]);
   const [selectedViewType, setSelectedViewType] = useState(null);
   const [selectedRoomForBooking, setSelectedRoomForBooking] = useState(null);
+  const [showViewSelectionModal, setShowViewSelectionModal] = useState(false);
+  const [roomForBooking, setRoomForBooking] = useState(null);
+  const [viewTypeRooms, setViewTypeRooms] = useState({});
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchRooms();
-  }, []);
-
-  const fetchRooms = async () => {
+  const fetchRooms = useCallback(async () => {
     try {
       setLoading(true);
       const params = checkInDate && checkOutDate ? { checkInDate, checkOutDate } : {};
@@ -29,7 +28,11 @@ const Rooms = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [checkInDate, checkOutDate]);
+
+  useEffect(() => {
+    fetchRooms();
+  }, [fetchRooms]);
 
   const handleFilter = (e) => {
     e.preventDefault();
@@ -68,6 +71,56 @@ const Rooms = () => {
       }
     } catch (error) {
       console.error('방 로드 실패:', error);
+    }
+  };
+
+  const handleBookClick = async (room) => {
+    if (!checkInDate || !checkOutDate) {
+      alert('체크인/체크아웃 날짜를 선택해주세요.');
+      return;
+    }
+    
+    setRoomForBooking(room);
+    
+    // 같은 타입의 모든 방 가져오기 (날짜 고려)
+    try {
+      const roomsResponse = await roomAPI.getByType(room.type, checkInDate, checkOutDate);
+      const rooms = roomsResponse.data;
+      
+      // 뷰 타입별로 그룹화
+      const groupedByView = {};
+      ['오션뷰', '마운틴뷰'].forEach(viewType => {
+        const viewRooms = rooms.filter(r => r.viewType === viewType);
+        groupedByView[viewType] = viewRooms;
+      });
+      
+      setViewTypeRooms(groupedByView);
+      setShowViewSelectionModal(true);
+    } catch (error) {
+      console.error('방 로드 실패:', error);
+      alert('방 정보를 불러오는데 실패했습니다.');
+    }
+  };
+
+  const handleViewSelect = async (viewType) => {
+    if (!roomForBooking) return;
+    
+    try {
+      // 날짜를 고려하여 해당 뷰 타입의 예약 가능한 방 가져오기
+      const response = await roomAPI.getByTypeAndViewType(roomForBooking.type, viewType, checkInDate, checkOutDate);
+      const availableRooms = response.data.filter(r => r.available && !r.allBooked);
+      
+      if (availableRooms.length === 0) {
+        alert('해당 뷰 옵션의 남은 방이 없습니다.');
+        return;
+      }
+      
+      // 첫 번째 예약 가능한 방 선택
+      const selectedRoom = availableRooms[0];
+      navigate(`/booking?roomId=${selectedRoom.id}&checkIn=${checkInDate}&checkOut=${checkOutDate}`);
+    } catch (error) {
+      console.error('방 로드 실패:', error);
+      alert('방 정보를 불러오는데 실패했습니다.');
     }
   };
 
@@ -141,9 +194,9 @@ const Rooms = () => {
             <div className="p-6">
               <div className="flex items-start justify-between mb-2">
                 <h3 className="text-xl font-semibold text-hotel-dark">{room.type}</h3>
-                {room.allBooked && (
+                {room.allBooked && checkInDate && checkOutDate && (
                   <span className="px-3 py-1 bg-red-100 text-red-600 rounded-full text-sm font-semibold">
-                    All Booked
+                    자리 없다
                   </span>
                 )}
               </div>
@@ -169,11 +222,11 @@ const Rooms = () => {
                   상세보기
                 </button>
                 <button
-                  onClick={() => handleBook(room.id)}
+                  onClick={() => handleBookClick(room)}
                   className="flex-1 px-4 py-2 bg-hotel-navy text-white rounded-lg hover:bg-hotel-teal font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={!room.available || room.allBooked}
+                  disabled={!room.available || (room.allBooked && checkInDate && checkOutDate)}
                 >
-                  {room.allBooked ? 'All Booked' : '예약하기'}
+                  {room.allBooked && checkInDate && checkOutDate ? '자리 없다' : '예약하기'}
                 </button>
               </div>
             </div>
@@ -303,10 +356,64 @@ const Rooms = () => {
               <button
                 onClick={() => handleBook(selectedRoomForBooking ? selectedRoomForBooking.id : selectedRoom.id)}
                 className="mt-6 w-full px-4 py-3 bg-hotel-navy text-white rounded-lg hover:bg-hotel-teal font-semibold shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!selectedRoomForBooking?.available || selectedRoomForBooking?.allBooked}
+                disabled={!selectedRoomForBooking?.available || (selectedRoomForBooking?.allBooked && checkInDate && checkOutDate)}
               >
-                {selectedRoomForBooking?.allBooked ? 'All Booked' : '예약하기'}
+                {selectedRoomForBooking?.allBooked && checkInDate && checkOutDate ? '자리 없다' : '예약하기'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 뷰 선택 모달 */}
+      {showViewSelectionModal && roomForBooking && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-hotel-pale-sky">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="text-2xl font-bold text-hotel-dark">{roomForBooking.type} 뷰 선택</h2>
+                <button
+                  onClick={() => {
+                    setShowViewSelectionModal(false);
+                    setRoomForBooking(null);
+                    setViewTypeRooms({});
+                  }}
+                  className="text-hotel-cyan hover:text-hotel-dark text-2xl transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="space-y-3 mb-6">
+                {['오션뷰', '마운틴뷰'].map((viewType) => {
+                  const rooms = viewTypeRooms[viewType] || [];
+                  const availableRooms = rooms.filter(r => r.available && !r.allBooked);
+                  const isAvailable = availableRooms.length > 0;
+                  
+                  return (
+                    <button
+                      key={viewType}
+                      onClick={() => isAvailable && handleViewSelect(viewType)}
+                      disabled={!isAvailable}
+                      className={`w-full px-6 py-4 rounded-lg font-semibold transition-all text-left ${
+                        isAvailable
+                          ? 'bg-hotel-pale-sky text-hotel-navy hover:bg-hotel-light-cyan border-2 border-hotel-pale-sky hover:border-hotel-sky'
+                          : 'bg-gray-200 text-gray-400 cursor-not-allowed border-2 border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg">{viewType}</span>
+                        {!isAvailable && (
+                          <span className="text-sm text-red-600 font-medium">남은 방이 없습니다</span>
+                        )}
+                        {isAvailable && (
+                          <span className="text-sm text-hotel-teal font-medium">예약 가능</span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

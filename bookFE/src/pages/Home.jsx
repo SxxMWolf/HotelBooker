@@ -75,16 +75,9 @@ const Home = () => {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="text-lg font-semibold text-hotel-dark">
-                          {notice.title}
-                        </h3>
-                        {notice.important && (
-                          <span className="px-3 py-1 text-xs font-semibold bg-hotel-sky text-hotel-dark rounded-full">
-                            중요
-                          </span>
-                        )}
-                      </div>
+                      <h3 className="text-lg font-semibold text-hotel-dark">
+                        {notice.title}
+                      </h3>
                       <p className="mt-2 text-hotel-navy">{notice.content}</p>
                       <p className="mt-2 text-sm text-hotel-cyan">
                         {new Date(notice.createdAt).toLocaleDateString('ko-KR')}
