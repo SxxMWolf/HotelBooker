@@ -390,10 +390,15 @@ const MyPage = () => {
                   const bCheckOut = new Date(b.checkOutDate);
                   const aIsPast = aCheckOut < today;
                   const bIsPast = bCheckOut < today;
+                  const aIsCancelled = a.status === 'CANCELLED';
+                  const bIsCancelled = b.status === 'CANCELLED';
                   
-                  // 다가오는 예약을 먼저 (isPast가 false인 것)
-                  if (aIsPast !== bIsPast) {
-                    return aIsPast ? 1 : -1;
+                  // 취소되지 않은 다가오는 예약을 최우선
+                  const aIsUpcomingNotCancelled = !aIsPast && !aIsCancelled;
+                  const bIsUpcomingNotCancelled = !bIsPast && !bIsCancelled;
+                  
+                  if (aIsUpcomingNotCancelled !== bIsUpcomingNotCancelled) {
+                    return aIsUpcomingNotCancelled ? -1 : 1;
                   }
                   
                   // 같은 그룹 내에서는 체크인 날짜 순으로 정렬 (가까운 날짜부터)
@@ -410,15 +415,18 @@ const MyPage = () => {
                 const daysUntilCheckIn = Math.ceil((checkInDate - today) / (1000 * 60 * 60 * 24));
                 const isOneWeekOrMore = daysUntilCheckIn >= 7;
                 
+                const isCancelled = booking.status === 'CANCELLED';
+                const isDisabled = isPast || isCancelled;
+                
                 return (
                   <div
                     key={booking.id}
                     className={`border rounded-xl p-6 transition-all ${
-                      isPast
+                      isDisabled
                         ? 'border-gray-300 bg-gray-50 opacity-75'
                         : 'border-hotel-pale hover:bg-hotel-pale-sky cursor-pointer'
                     }`}
-                    onClick={!isPast ? () => handleShowRoomInfo(booking) : undefined}
+                    onClick={!isDisabled ? () => handleShowRoomInfo(booking) : undefined}
                   >
                     <div className="flex justify-between items-start">
                       <div>
@@ -429,24 +437,24 @@ const MyPage = () => {
                               지난 예약
                             </span>
                           )}
-                          {!isPast && (
+                          {!isPast && !isCancelled && (
                             <span className="text-xs px-2 py-1 bg-hotel-pale-sky text-hotel-teal rounded-full">
                               다가오는 예약
                             </span>
                           )}
                         </div>
-                        <p className={`mb-1 ${isPast ? 'text-gray-500' : 'text-hotel-cyan'}`}>
+                        <p className={`mb-1 ${isDisabled ? 'text-gray-500' : 'text-hotel-cyan'}`}>
                           {new Date(booking.checkInDate).toLocaleDateString('ko-KR')} ~{' '}
                           {new Date(booking.checkOutDate).toLocaleDateString('ko-KR')}
                         </p>
-                        <p className={`mb-2 ${isPast ? 'text-gray-500' : 'text-hotel-cyan'}`}>
+                        <p className={`mb-2 ${isDisabled ? 'text-gray-500' : 'text-hotel-cyan'}`}>
                           인원: {booking.guests}명
                         </p>
-                        <p className={`text-xl font-semibold mb-2 ${isPast ? 'text-gray-600' : 'text-hotel-teal'}`}>
+                        <p className={`text-xl font-semibold mb-2 ${isDisabled ? 'text-gray-600' : 'text-hotel-teal'}`}>
                           ₩{booking.totalPrice.toLocaleString()}
                         </p>
                         {booking.status === 'CANCELLED' && (
-                          <p className="inline-block px-3 py-1 rounded-lg text-sm mt-2 font-medium bg-red-100 text-red-800 border border-red-300">
+                          <p className="text-red-600 text-sm mt-2 font-medium">
                             취소됨
                           </p>
                         )}
@@ -493,7 +501,12 @@ const MyPage = () => {
             <p className="text-hotel-cyan text-center py-8">결제 내역이 없습니다.</p>
           ) : (
             <div className="space-y-4">
-              {payments.map((payment) => (
+              {payments.map((payment) => {
+                const relatedBooking = bookings.find(b => b.id === payment.bookingId);
+                const isCancelled = relatedBooking?.status === 'CANCELLED';
+                const showRefundPending = isCancelled && payment.status === 'COMPLETED';
+                
+                return (
                 <div 
                   key={payment.id} 
                   className="border border-hotel-pale rounded-xl p-6 hover:bg-hotel-pale-sky transition-all cursor-pointer"
@@ -513,17 +526,27 @@ const MyPage = () => {
                       <p className="text-hotel-cyan">거래번호: {payment.transactionId}</p>
                     </div>
                     <span
-                      className={`px-3 py-1 rounded-lg text-sm font-medium ${
-                        payment.status === 'COMPLETED'
-                          ? 'bg-hotel-pale-sky text-hotel-teal border border-hotel-teal'
-                          : 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+                      className={`text-sm font-medium ${
+                        showRefundPending
+                          ? 'text-red-600'
+                          : payment.status === 'COMPLETED'
+                          ? 'text-hotel-teal'
+                          : payment.status === 'REFUNDED'
+                          ? 'bg-red-100 text-red-800 border border-red-300 px-3 py-1 rounded-lg'
+                          : 'bg-yellow-100 text-yellow-800 border border-yellow-300 px-3 py-1 rounded-lg'
                       }`}
                     >
-                      {payment.status === 'COMPLETED' ? '완료' : '대기중'}
+                      {showRefundPending
+                        ? '환불 대기 중'
+                        : payment.status === 'COMPLETED' 
+                        ? '완료' 
+                        : payment.status === 'REFUNDED'
+                        ? '환불'
+                        : '대기중'}
                     </span>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           )}
         </div>
@@ -744,13 +767,23 @@ const MyPage = () => {
                   결제 상태
                 </label>
                 <span
-                  className={`inline-block px-3 py-1 rounded-lg text-sm font-medium ${
-                    selectedPayment.status === 'COMPLETED'
-                      ? 'bg-hotel-pale-sky text-hotel-teal border border-hotel-teal'
-                      : 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+                  className={`text-sm font-medium ${
+                    selectedBooking?.status === 'CANCELLED' && selectedPayment.status === 'COMPLETED'
+                      ? 'text-red-600'
+                      : selectedPayment.status === 'COMPLETED'
+                      ? 'text-hotel-teal'
+                      : selectedPayment.status === 'REFUNDED'
+                      ? 'bg-red-100 text-red-800 border border-red-300 inline-block px-3 py-1 rounded-lg'
+                      : 'bg-yellow-100 text-yellow-800 border border-yellow-300 inline-block px-3 py-1 rounded-lg'
                   }`}
                 >
-                  {selectedPayment.status === 'COMPLETED' ? '완료' : '대기중'}
+                  {selectedBooking?.status === 'CANCELLED' && selectedPayment.status === 'COMPLETED'
+                    ? '환불 대기 중'
+                    : selectedPayment.status === 'COMPLETED' 
+                    ? '완료' 
+                    : selectedPayment.status === 'REFUNDED'
+                    ? '환불'
+                    : '대기중'}
                 </span>
               </div>
             </div>

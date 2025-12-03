@@ -79,20 +79,22 @@ public class BookingService {
 
         // 결제 생성 및 처리 (booking이 저장된 후 생성)
         Payment payment = Payment.builder()
-                .booking(booking)
                 .amount(totalPrice)
                 .method(request.getMethod())
                 .status(Payment.PaymentStatus.COMPLETED)
                 .paymentDate(java.time.LocalDateTime.now())
                 .transactionId(java.util.UUID.randomUUID().toString())
                 .build();
+        
+        // Payment에 Booking 명시적으로 설정 (JPA 관계 설정)
+        payment.setBooking(booking);
 
         // Payment 저장
         payment = paymentRepository.save(payment);
         
         // Booking에 Payment 연결 (양방향 관계 설정)
         booking.setPayment(payment);
-        booking = bookingRepository.save(booking);
+        bookingRepository.save(booking);
 
         return convertToDTO(booking);
     }
@@ -102,6 +104,7 @@ public class BookingService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
         return bookingRepository.findByUser(user).stream()
+                .filter(booking -> booking.getStatus() != Booking.BookingStatus.DELETED)
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -162,6 +165,13 @@ public class BookingService {
             reviewRepository.deleteAll(reviews);
         }
         
+        // 예약 취소 시 결제 상태를 환불(REFUNDED)로 변경
+        if (booking.getPayment() != null) {
+            Payment payment = booking.getPayment();
+            payment.setStatus(Payment.PaymentStatus.REFUNDED);
+            paymentRepository.save(payment);
+        }
+        
         booking.setStatus(Booking.BookingStatus.CANCELLED);
         bookingRepository.save(booking);
     }
@@ -179,14 +189,9 @@ public class BookingService {
             throw new RuntimeException("취소된 예약만 삭제할 수 있습니다");
         }
         
-        // 예약 삭제 시 해당 예약과 연결된 리뷰 삭제
-        List<com.hotel.booking.review.entity.Review> reviews = reviewRepository.findByBookingId(booking.getId());
-        if (!reviews.isEmpty()) {
-            reviewRepository.deleteAll(reviews);
-        }
-        
-        // 예약 삭제
-        bookingRepository.delete(booking);
+        // 소프트 삭제: 상태를 DELETED로 변경 (데이터 보존)
+        booking.setStatus(Booking.BookingStatus.DELETED);
+        bookingRepository.save(booking);
     }
 
     private BookingDTO convertToDTO(Booking booking) {

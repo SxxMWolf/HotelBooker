@@ -14,7 +14,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     List<Room> findByAvailableTrue();
     
     @Query("SELECT r FROM Room r WHERE r.available = true AND r.id NOT IN " +
-           "(SELECT b.room.id FROM Booking b WHERE b.status != 'CANCELLED' " +
+           "(SELECT b.room.id FROM Booking b WHERE b.status NOT IN ('CANCELLED', 'DELETED') " +
            "AND ((b.checkInDate <= :checkOutDate AND b.checkOutDate >= :checkInDate)))")
     List<Room> findAvailableRooms(@Param("checkInDate") LocalDate checkInDate, 
                                    @Param("checkOutDate") LocalDate checkOutDate);

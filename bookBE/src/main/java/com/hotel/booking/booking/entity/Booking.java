@@ -61,7 +61,7 @@ public class Booking {
     }
 
     public enum BookingStatus {
-        CONFIRMED, CANCELLED, COMPLETED
+        CONFIRMED, CANCELLED, COMPLETED, DELETED
     }
 }
 
