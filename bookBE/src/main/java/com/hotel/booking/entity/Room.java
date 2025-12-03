@@ -43,6 +43,12 @@ public class Room {
     @Column
     private String imageUrl;
 
+    @Column
+    private String viewType; // 오션뷰, 마운틴뷰
+
+    @Column
+    private Integer bedCount; // 침대 개수
+
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
     @Builder.Default
     private List<Booking> bookings = new ArrayList<>();

@@ -13,67 +13,75 @@
 
 -- ============================================
 -- 객실 데이터 삽입
--- 방 종류: 싱글(20개), 더블(15개), 스위트(10개), 패밀리(5개), 프리미엄(3개)
+-- 방 종류: 싱글(20개), 더블(15개), 패밀리(5개), 프리미엄(3개)
+-- 순서: 싱글 → 더블 → 패밀리 → 프리미엄
+-- id는 1부터 순차적으로 증가
 -- ============================================
 
--- 1. 싱글 룸 (20개) - 가장 싼 방
-INSERT INTO rooms (name, description, type, capacity, price_per_night, available, image_url)
+-- 기존 rooms 데이터 삭제
+DELETE FROM rooms;
+
+-- 시퀀스 리셋
+SELECT setval('rooms_id_seq', 1, false);
+
+-- 1. 싱글 룸 (20개) - id 1~20 (50만원)
+-- 앞 10개는 오션뷰, 뒤 10개는 마운틴뷰
+INSERT INTO rooms (name, description, type, capacity, price_per_night, available, image_url, view_type, bed_count)
 SELECT 
-  '싱글 룸 ' || num,
+  '싱글' || LPAD(num::text, 2, '0'),
   '아늑하고 편안한 싱글 룸으로, 혼자 여행하시는 분들에게 최적화된 공간입니다. 프리미엄 침대와 최신 시설을 갖추고 있습니다.',
   '싱글',
   1,
-  80000.00,
+  500000.00,
   true,
-  'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800'
+  'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800',
+  CASE WHEN num <= 10 THEN '오션뷰' ELSE '마운틴뷰' END,
+  1
 FROM generate_series(1, 20) AS num;
 
--- 2. 더블 룸 (15개)
-INSERT INTO rooms (name, description, type, capacity, price_per_night, available, image_url)
+-- 2. 더블 룸 (15개) - id 21~35 (80만원)
+-- 앞 8개는 오션뷰, 뒤 7개는 마운틴뷰
+INSERT INTO rooms (name, description, type, capacity, price_per_night, available, image_url, view_type, bed_count)
 SELECT 
-  '더블 룸 ' || num,
+  '더블' || LPAD(num::text, 2, '0'),
   '커플이나 친구와 함께 머물기에 완벽한 더블 룸입니다. 넓은 공간과 아늑한 분위기로 편안한 휴식을 제공합니다.',
   '더블',
   2,
-  120000.00,
+  800000.00,
   true,
-  'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800'
+  'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800',
+  CASE WHEN num <= 8 THEN '오션뷰' ELSE '마운틴뷰' END,
+  1
 FROM generate_series(1, 15) AS num;
 
--- 3. 스위트 룸 (10개)
-INSERT INTO rooms (name, description, type, capacity, price_per_night, available, image_url)
+-- 3. 패밀리 룸 (5개) - id 36~40 (180만원)
+-- 앞 3개는 오션뷰, 뒤 2개는 마운틴뷰
+INSERT INTO rooms (name, description, type, capacity, price_per_night, available, image_url, view_type, bed_count)
 SELECT 
-  '스위트 룸 ' || num,
-  '고급스러운 인테리어와 넓은 공간을 갖춘 스위트 룸입니다. 거실과 침실이 분리되어 있어 장기 투숙에도 편리합니다.',
-  '스위트',
-  2,
-  200000.00,
-  true,
-  'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800'
-FROM generate_series(1, 10) AS num;
-
--- 4. 패밀리 룸 (5개)
-INSERT INTO rooms (name, description, type, capacity, price_per_night, available, image_url)
-SELECT 
-  '패밀리 룸 ' || num,
+  '패밀리' || LPAD(num::text, 2, '0'),
   '가족 여행에 최적화된 넓은 패밀리 룸입니다. 최대 4명까지 수용 가능하며, 아이들을 위한 안전한 환경을 제공합니다.',
   '패밀리',
   4,
-  250000.00,
+  1800000.00,
   true,
-  'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800'
+  'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800',
+  CASE WHEN num <= 3 THEN '오션뷰' ELSE '마운틴뷰' END,
+  2
 FROM generate_series(1, 5) AS num;
 
--- 5. 프리미엄 룸 (3개) - 가장 비싼 방
-INSERT INTO rooms (name, description, type, capacity, price_per_night, available, image_url)
+-- 4. 프리미엄 룸 (3개) - id 41~43 (250만원)
+-- 앞 2개는 오션뷰, 뒤 1개는 마운틴뷰
+INSERT INTO rooms (name, description, type, capacity, price_per_night, available, image_url, view_type, bed_count)
 SELECT 
-  '프리미엄 룸 ' || num,
+  '프리미엄' || LPAD(num::text, 2, '0'),
   '최고급 시설과 서비스를 제공하는 프리미엄 룸입니다. 전용 발코니와 최신 시설을 갖추고 있습니다.',
   '프리미엄',
   2,
-  350000.00,
+  2500000.00,
   true,
-  'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800'
+  'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800',
+  CASE WHEN num <= 2 THEN '오션뷰' ELSE '마운틴뷰' END,
+  1
 FROM generate_series(1, 3) AS num;
 
 -- ============================================
@@ -103,18 +111,19 @@ INSERT INTO users (id, password, email, nickname, role, created_at) VALUES
 
 -- ============================================
 -- 예약 데이터 삽입
+-- 가격: 싱글(50만원), 더블(80만원), 스위트(120만원), 패밀리(180만원), 프리미엄(250만원)
 -- ============================================
 INSERT INTO bookings (user_id, room_id, check_in_date, check_out_date, guests, total_price, status, created_at) VALUES
-('user01', 1, CURRENT_DATE + INTERVAL '5 days', CURRENT_DATE + INTERVAL '7 days', 1, 160000.00, 'CONFIRMED', NOW() - INTERVAL '10 days'),
-('user01', 21, CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE - INTERVAL '8 days', 2, 240000.00, 'COMPLETED', NOW() - INTERVAL '20 days'),
-('user02', 36, CURRENT_DATE + INTERVAL '3 days', CURRENT_DATE + INTERVAL '5 days', 2, 400000.00, 'PENDING', NOW() - INTERVAL '2 days'),
-('user02', 46, CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE - INTERVAL '12 days', 4, 750000.00, 'COMPLETED', NOW() - INTERVAL '18 days'),
-('user03', 51, CURRENT_DATE + INTERVAL '7 days', CURRENT_DATE + INTERVAL '10 days', 2, 1050000.00, 'CONFIRMED', NOW() - INTERVAL '5 days'),
-('user03', 21, CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE - INTERVAL '3 days', 2, 240000.00, 'COMPLETED', NOW() - INTERVAL '8 days'),
-('user04', 5, CURRENT_DATE + INTERVAL '1 day', CURRENT_DATE + INTERVAL '3 days', 1, 160000.00, 'PENDING', NOW() - INTERVAL '1 day'),
-('user04', 50, CURRENT_DATE - INTERVAL '20 days', CURRENT_DATE - INTERVAL '17 days', 4, 1500000.00, 'COMPLETED', NOW() - INTERVAL '22 days'),
-('user05', 1, CURRENT_DATE + INTERVAL '10 days', CURRENT_DATE + INTERVAL '12 days', 1, 160000.00, 'CONFIRMED', NOW() - INTERVAL '3 days'),
-('user05', 22, CURRENT_DATE - INTERVAL '8 days', CURRENT_DATE - INTERVAL '6 days', 2, 240000.00, 'CANCELLED', NOW() - INTERVAL '12 days');
+('user01', 1, CURRENT_DATE + INTERVAL '5 days', CURRENT_DATE + INTERVAL '7 days', 1, 1000000.00, 'CONFIRMED', NOW() - INTERVAL '10 days'),  -- 싱글 2박
+('user01', 21, CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE - INTERVAL '8 days', 2, 1600000.00, 'COMPLETED', NOW() - INTERVAL '20 days'),  -- 더블 2박
+('user02', 36, CURRENT_DATE + INTERVAL '3 days', CURRENT_DATE + INTERVAL '5 days', 2, 2400000.00, 'PENDING', NOW() - INTERVAL '2 days'),  -- 스위트 2박
+('user02', 46, CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE - INTERVAL '12 days', 4, 5400000.00, 'COMPLETED', NOW() - INTERVAL '18 days'),  -- 패밀리 3박
+('user03', 51, CURRENT_DATE + INTERVAL '7 days', CURRENT_DATE + INTERVAL '10 days', 2, 7500000.00, 'CONFIRMED', NOW() - INTERVAL '5 days'),  -- 프리미엄 3박
+('user03', 21, CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE - INTERVAL '3 days', 2, 1600000.00, 'COMPLETED', NOW() - INTERVAL '8 days'),  -- 더블 2박
+('user04', 5, CURRENT_DATE + INTERVAL '1 day', CURRENT_DATE + INTERVAL '3 days', 1, 1000000.00, 'PENDING', NOW() - INTERVAL '1 day'),  -- 싱글 2박
+('user04', 50, CURRENT_DATE - INTERVAL '20 days', CURRENT_DATE - INTERVAL '17 days', 4, 5400000.00, 'COMPLETED', NOW() - INTERVAL '22 days'),  -- 패밀리 3박
+('user05', 1, CURRENT_DATE + INTERVAL '10 days', CURRENT_DATE + INTERVAL '12 days', 1, 1000000.00, 'CONFIRMED', NOW() - INTERVAL '3 days'),  -- 싱글 2박
+('user05', 22, CURRENT_DATE - INTERVAL '8 days', CURRENT_DATE - INTERVAL '6 days', 2, 1600000.00, 'CANCELLED', NOW() - INTERVAL '12 days');  -- 더블 2박
 
 -- ============================================
 -- 결제 데이터 삽입 (서브쿼리로 booking_id 찾기)
@@ -175,8 +184,43 @@ WHERE b.status = 'COMPLETED'
 ORDER BY b.id;
 
 -- booking_id가 NULL인 리뷰 추가 (직접 작성한 리뷰)
-INSERT INTO reviews (user_id, room_id, booking_id, rating, comment, created_at) VALUES
-('user05', 1, NULL, 4, '싱글 룸치고는 넓고 깔끔했습니다. 혼자 여행하기에 충분했어요.', NOW() - INTERVAL '1 day'),
-('user01', 36, NULL, 5, '스위트 룸의 인테리어가 정말 고급스러웠습니다. 거실과 침실이 분리되어 있어서 편리했어요.', NOW() - INTERVAL '7 days'),
-('user02', 51, NULL, 4, '프리미엄 룸은 가격 대비 만족도가 높았습니다. 발코니에서 보는 전망이 좋았어요.', NOW() - INTERVAL '6 days'),
-('user03', 5, NULL, 3, '싱글 룸은 작업하기에 좋았지만, 조금 좁았던 것 같아요. 출장용으로는 괜찮습니다.', NOW() - INTERVAL '4 days');
+-- 실제 존재하는 room_id를 참조하도록 서브쿼리 사용
+INSERT INTO reviews (user_id, room_id, booking_id, rating, comment, created_at)
+SELECT 
+  'user05',
+  (SELECT id FROM rooms WHERE type = '싱글' ORDER BY id LIMIT 1),
+  NULL,
+  4,
+  '싱글 룸치고는 넓고 깔끔했습니다. 혼자 여행하기에 충분했어요.',
+  NOW() - INTERVAL '1 day'
+WHERE EXISTS (SELECT 1 FROM rooms WHERE type = '싱글');
+
+INSERT INTO reviews (user_id, room_id, booking_id, rating, comment, created_at)
+SELECT 
+  'user01',
+  (SELECT id FROM rooms WHERE type = '스위트' ORDER BY id LIMIT 1),
+  NULL,
+  5,
+  '스위트 룸의 인테리어가 정말 고급스러웠습니다. 거실과 침실이 분리되어 있어서 편리했어요.',
+  NOW() - INTERVAL '7 days'
+WHERE EXISTS (SELECT 1 FROM rooms WHERE type = '스위트');
+
+INSERT INTO reviews (user_id, room_id, booking_id, rating, comment, created_at)
+SELECT 
+  'user02',
+  (SELECT id FROM rooms WHERE type = '프리미엄' ORDER BY id LIMIT 1),
+  NULL,
+  4,
+  '프리미엄 룸은 가격 대비 만족도가 높았습니다. 발코니에서 보는 전망이 좋았어요.',
+  NOW() - INTERVAL '6 days'
+WHERE EXISTS (SELECT 1 FROM rooms WHERE type = '프리미엄');
+
+INSERT INTO reviews (user_id, room_id, booking_id, rating, comment, created_at)
+SELECT 
+  'user03',
+  (SELECT id FROM rooms WHERE type = '싱글' ORDER BY id LIMIT 1 OFFSET 4),
+  NULL,
+  3,
+  '싱글 룸은 작업하기에 좋았지만, 조금 좁았던 것 같아요. 출장용으로는 괜찮습니다.',
+  NOW() - INTERVAL '4 days'
+WHERE EXISTS (SELECT 1 FROM rooms WHERE type = '싱글');

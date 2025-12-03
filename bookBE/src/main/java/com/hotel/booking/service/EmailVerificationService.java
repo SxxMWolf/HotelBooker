@@ -2,6 +2,8 @@ package com.hotel.booking.service;
 
 import com.hotel.booking.entity.EmailVerification;
 import com.hotel.booking.repository.EmailVerificationRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +21,9 @@ public class EmailVerificationService {
     private final EmailVerificationRepository emailVerificationRepository;
     private final MailService mailService;
     
+    @PersistenceContext
+    private EntityManager entityManager;
+    
     @Value("${spring.mail.username:}")
     private String mailUsername;
 
@@ -32,12 +37,12 @@ public class EmailVerificationService {
         
         log.info("인증 코드 생성 시작: email={}", email);
 
-        // 기존 인증 정보가 있으면 삭제 (Optional로 안전하게 처리)
-        Optional<EmailVerification> existing = emailVerificationRepository.findByEmail(email);
-        if (existing.isPresent()) {
-            emailVerificationRepository.delete(existing.get());
-            log.debug("기존 인증 정보 삭제 완료: {}", email);
-        }
+        // 기존 인증 정보 삭제 (unique 제약 조건을 피하기 위해 먼저 삭제)
+        emailVerificationRepository.deleteByEmail(email);
+        // 삭제가 데이터베이스에 즉시 반영되도록 flush 및 clear
+        entityManager.flush();
+        entityManager.clear();
+        log.debug("기존 인증 정보 삭제 완료: {}", email);
 
         // 새 인증 정보 저장 (5분 유효)
         EmailVerification verification = EmailVerification.builder()
@@ -47,7 +52,7 @@ public class EmailVerificationService {
                 .expiresAt(LocalDateTime.now().plusMinutes(5))
                 .build();
 
-        emailVerificationRepository.save(verification);
+        emailVerificationRepository.saveAndFlush(verification);
         log.info("인증 코드 저장 완료: email={}", email);
         
         // 이메일 발송 (트랜잭션 내에서 실행하되, 실패해도 롤백하지 않음)

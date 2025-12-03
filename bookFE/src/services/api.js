@@ -72,6 +72,8 @@ export const roomAPI = {
     return api.get('/rooms', { params });
   },
   getById: (id) => api.get(`/rooms/${id}`),
+  getByType: (type) => api.get(`/rooms/type/${type}`),
+  getByTypeAndViewType: (type, viewType) => api.get(`/rooms/type/${type}/view/${viewType}`),
 };
 
 export const bookingAPI = {

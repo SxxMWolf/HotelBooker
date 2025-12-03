@@ -9,6 +9,9 @@ const Rooms = () => {
   const [checkOutDate, setCheckOutDate] = useState('');
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [availableRooms, setAvailableRooms] = useState([]);
+  const [selectedViewType, setSelectedViewType] = useState(null);
+  const [selectedRoomForBooking, setSelectedRoomForBooking] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,11 +38,36 @@ const Rooms = () => {
 
   const handleViewDetails = async (room) => {
     setSelectedRoom(room);
+    setSelectedViewType(null);
+    setSelectedRoomForBooking(null);
     try {
       const response = await reviewAPI.getByRoomId(room.id);
       setReviews(response.data);
+      
+      // 같은 타입의 모든 방 가져오기
+      const roomsResponse = await roomAPI.getByType(room.type);
+      setAvailableRooms(roomsResponse.data);
+      
+      // 기본으로 첫 번째 방 선택
+      if (roomsResponse.data.length > 0) {
+        setSelectedRoomForBooking(roomsResponse.data[0]);
+        setSelectedViewType(roomsResponse.data[0].viewType);
+      }
     } catch (error) {
-      console.error('리뷰 로드 실패:', error);
+      console.error('데이터 로드 실패:', error);
+    }
+  };
+
+  const handleViewTypeChange = async (viewType) => {
+    if (!selectedRoom) return;
+    setSelectedViewType(viewType);
+    try {
+      const response = await roomAPI.getByTypeAndViewType(selectedRoom.type, viewType);
+      if (response.data.length > 0) {
+        setSelectedRoomForBooking(response.data[0]);
+      }
+    } catch (error) {
+      console.error('방 로드 실패:', error);
     }
   };
 
@@ -111,11 +139,17 @@ const Rooms = () => {
               />
             )}
             <div className="p-6">
-              <h3 className="text-xl font-semibold text-hotel-dark mb-2">{room.name}</h3>
+              <div className="flex items-start justify-between mb-2">
+                <h3 className="text-xl font-semibold text-hotel-dark">{room.type}</h3>
+                {room.allBooked && (
+                  <span className="px-3 py-1 bg-red-100 text-red-600 rounded-full text-sm font-semibold">
+                    All Booked
+                  </span>
+                )}
+              </div>
               <p className="text-hotel-navy mb-4 line-clamp-2">{room.description}</p>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="text-sm text-hotel-cyan">타입: {room.type}</p>
                   <p className="text-sm text-hotel-cyan">수용인원: {room.capacity}명</p>
                   {room.averageRating && (
                     <p className="text-sm text-hotel-sky font-semibold">
@@ -137,9 +171,9 @@ const Rooms = () => {
                 <button
                   onClick={() => handleBook(room.id)}
                   className="flex-1 px-4 py-2 bg-hotel-navy text-white rounded-lg hover:bg-hotel-teal font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={!room.available}
+                  disabled={!room.available || room.allBooked}
                 >
-                  예약하기
+                  {room.allBooked ? 'All Booked' : '예약하기'}
                 </button>
               </div>
             </div>
@@ -159,7 +193,7 @@ const Rooms = () => {
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-hotel-pale-sky">
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
-                <h2 className="text-3xl font-bold text-hotel-dark">{selectedRoom.name}</h2>
+                <h2 className="text-3xl font-bold text-hotel-dark">{selectedRoom.type}</h2>
                 <button
                   onClick={() => setSelectedRoom(null)}
                   className="text-hotel-cyan hover:text-hotel-dark text-2xl transition-colors"
@@ -175,6 +209,34 @@ const Rooms = () => {
                 />
               )}
               <p className="text-hotel-navy mb-4">{selectedRoom.description}</p>
+              
+              {/* 뷰 타입 선택 */}
+              {availableRooms.length > 0 && (
+                <div className="mb-4">
+                  <div className="flex gap-2">
+                    {['오션뷰', '마운틴뷰'].map((viewType) => {
+                      const hasViewType = availableRooms.some(r => r.viewType === viewType);
+                      return (
+                        <button
+                          key={viewType}
+                          onClick={() => handleViewTypeChange(viewType)}
+                          disabled={!hasViewType}
+                          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                            selectedViewType === viewType
+                              ? 'bg-hotel-navy text-white'
+                              : hasViewType
+                              ? 'bg-hotel-pale-sky text-hotel-navy hover:bg-hotel-light-cyan'
+                              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                          }`}
+                        >
+                          {viewType}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4 mb-4 bg-hotel-pale-sky p-4 rounded-lg">
                 <div>
                   <p className="text-sm text-hotel-cyan">타입</p>
@@ -184,10 +246,26 @@ const Rooms = () => {
                   <p className="text-sm text-hotel-cyan">수용인원</p>
                   <p className="font-semibold text-hotel-dark">{selectedRoom.capacity}명</p>
                 </div>
+                {selectedRoomForBooking && (
+                  <>
+                    <div>
+                      <p className="text-sm text-hotel-cyan">침대 개수</p>
+                      <p className="font-semibold text-hotel-dark">{selectedRoomForBooking.bedCount || '-'}개</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-hotel-cyan">뷰</p>
+                      <p className="font-semibold text-hotel-dark">{selectedRoomForBooking.viewType || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-hotel-cyan">금연</p>
+                      <p className="font-semibold text-hotel-dark">✓ 금연</p>
+                    </div>
+                  </>
+                )}
                 <div>
                   <p className="text-sm text-hotel-cyan">1박 가격</p>
                   <p className="font-semibold text-hotel-teal text-xl">
-                    ₩{selectedRoom.pricePerNight.toLocaleString()}
+                    ₩{selectedRoomForBooking ? selectedRoomForBooking.pricePerNight.toLocaleString() : selectedRoom.pricePerNight.toLocaleString()}
                   </p>
                 </div>
                 {selectedRoom.averageRating && (
@@ -223,11 +301,11 @@ const Rooms = () => {
               </div>
 
               <button
-                onClick={() => handleBook(selectedRoom.id)}
+                onClick={() => handleBook(selectedRoomForBooking ? selectedRoomForBooking.id : selectedRoom.id)}
                 className="mt-6 w-full px-4 py-3 bg-hotel-navy text-white rounded-lg hover:bg-hotel-teal font-semibold shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!selectedRoom.available}
+                disabled={!selectedRoomForBooking?.available || selectedRoomForBooking?.allBooked}
               >
-                예약하기
+                {selectedRoomForBooking?.allBooked ? 'All Booked' : '예약하기'}
               </button>
             </div>
           </div>

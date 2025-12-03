@@ -30,5 +30,17 @@ public class RoomController {
     public ResponseEntity<RoomDTO> getRoomById(@PathVariable Long id) {
         return ResponseEntity.ok(roomService.getRoomById(id));
     }
+
+    @GetMapping("/type/{type}")
+    public ResponseEntity<List<RoomDTO>> getRoomsByType(@PathVariable String type) {
+        return ResponseEntity.ok(roomService.getRoomsByType(type));
+    }
+
+    @GetMapping("/type/{type}/view/{viewType}")
+    public ResponseEntity<List<RoomDTO>> getRoomsByTypeAndViewType(
+            @PathVariable String type,
+            @PathVariable String viewType) {
+        return ResponseEntity.ok(roomService.getRoomsByTypeAndViewType(type, viewType));
+    }
 }
 
