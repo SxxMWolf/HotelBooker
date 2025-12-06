@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 public class BookingDTO {
     private Long id;
     private String userId;
+    private String userName;
     private Long roomId;
     private String roomName;
     private LocalDate checkInDate;
@@ -25,6 +26,7 @@ public class BookingDTO {
     private Integer guests;
     private BigDecimal totalPrice;
     private Booking.BookingStatus status;
+    private String specialRequests;
     private LocalDateTime createdAt;
     private PaymentDTO payment;
 }

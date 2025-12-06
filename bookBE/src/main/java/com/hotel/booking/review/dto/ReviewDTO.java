@@ -19,6 +19,9 @@ public class ReviewDTO {
     private Integer rating;
     private String title;
     private String comment;
+    private Boolean isPublic;
+    private String adminReply;
+    private LocalDateTime adminReplyDate;
     private LocalDateTime createdAt;
 }
 

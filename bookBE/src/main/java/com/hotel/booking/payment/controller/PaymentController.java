@@ -1,4 +1,4 @@
-package com.hotel.booking.booking.controller;
+package com.hotel.booking.payment.controller;
 
 import com.hotel.booking.payment.dto.PaymentDTO;
 import com.hotel.booking.payment.dto.PaymentRequest;

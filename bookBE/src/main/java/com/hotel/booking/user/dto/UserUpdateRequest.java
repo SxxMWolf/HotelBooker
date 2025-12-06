@@ -7,5 +7,6 @@ public class UserUpdateRequest {
     private String email;
     private String nickname;
     private String password;
+    private String currentPassword;
 }
 

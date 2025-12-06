@@ -22,7 +22,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserDTO updateUserProfile(String userId, String email, String nickname, String password) {
+    public UserDTO updateUserProfile(String userId, String email, String nickname, String password, String currentPassword) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
 
@@ -33,6 +33,12 @@ public class UserService {
             user.setNickname(nickname);
         }
         if (password != null && !password.isEmpty()) {
+            // 현재 비밀번호 확인 (비밀번호 변경 시)
+            if (currentPassword != null && !currentPassword.isEmpty()) {
+                if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+                    throw new RuntimeException("현재 비밀번호가 일치하지 않습니다.");
+                }
+            }
             user.setPassword(passwordEncoder.encode(password));
         }
 

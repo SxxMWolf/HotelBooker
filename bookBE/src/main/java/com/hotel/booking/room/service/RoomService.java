@@ -148,6 +148,7 @@ public class RoomService {
                 .capacity(room.getCapacity())
                 .pricePerNight(room.getPricePerNight())
                 .available(room.getAvailable())
+                .status(room.getStatus())
                 .imageUrl(room.getImageUrl())
                 .averageRating(averageRating)
                 .reviewCount(allReviews.size())

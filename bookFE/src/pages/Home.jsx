@@ -6,6 +6,7 @@ import { noticeAPI } from '../services/api';
 const Home = () => {
   const { user } = useAuth();
   const [notices, setNotices] = useState([]);
+  const [expandedNotices, setExpandedNotices] = useState(new Set());
 
   useEffect(() => {
     const fetchNotices = async () => {
@@ -18,6 +19,19 @@ const Home = () => {
     };
     fetchNotices();
   }, []);
+
+  const toggleNotice = (noticeId) => {
+    const newExpanded = new Set(expandedNotices);
+    if (newExpanded.has(noticeId)) {
+      newExpanded.delete(noticeId);
+    } else {
+      newExpanded.add(noticeId);
+    }
+    setExpandedNotices(newExpanded);
+  };
+
+  const displayedNotices = notices.slice(0, 5);
+  const hasMoreNotices = notices.length > 5;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -58,34 +72,81 @@ const Home = () => {
       </div>
 
       <div className="mt-12">
-        <h2 className="text-3xl font-bold text-hotel-dark mb-6">공지사항</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-3xl font-bold text-hotel-dark">공지사항</h2>
+          {hasMoreNotices && (
+            <Link
+              to="/notices"
+              className="text-hotel-sky hover:text-hotel-teal font-semibold transition-colors"
+            >
+              더보기 →
+            </Link>
+          )}
+        </div>
         <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-hotel-pale-sky">
-          {notices.length === 0 ? (
+          {displayedNotices.length === 0 ? (
             <div className="p-8 text-center text-hotel-cyan">
               등록된 공지사항이 없습니다.
             </div>
           ) : (
             <ul className="divide-y divide-hotel-pale-sky">
-              {notices.map((notice) => (
-                <li
-                  key={notice.id}
-                  className={`p-6 hover:bg-hotel-pale-sky transition-colors ${
-                    notice.important ? 'bg-hotel-pale-sky border-l-4 border-hotel-sky' : ''
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-hotel-dark">
-                        {notice.title}
-                      </h3>
-                      <p className="mt-2 text-hotel-navy">{notice.content}</p>
-                      <p className="mt-2 text-sm text-hotel-cyan">
-                        {new Date(notice.createdAt).toLocaleDateString('ko-KR')}
-                      </p>
+              {displayedNotices.map((notice) => {
+                const isExpanded = expandedNotices.has(notice.id);
+                return (
+                  <li
+                    key={notice.id}
+                    className={`p-6 transition-colors ${
+                      notice.important ? 'bg-hotel-pale-sky border-l-4 border-hotel-sky' : ''
+                    }`}
+                  >
+                    <div
+                      className="cursor-pointer"
+                      onClick={() => toggleNotice(notice.id)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            {notice.important && (
+                              <span className="px-2 py-1 bg-hotel-sky text-white text-xs font-semibold rounded">
+                                중요
+                              </span>
+                            )}
+                            <h3 className="text-lg font-semibold text-hotel-dark">
+                              {notice.title}
+                            </h3>
+                          </div>
+                          {isExpanded && (
+                            <div className="mt-3 mb-3">
+                              <p className="text-hotel-navy whitespace-pre-wrap">
+                                {notice.content}
+                              </p>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-4 text-sm text-hotel-cyan mt-2">
+                            <span>
+                              {new Date(notice.createdAt).toLocaleDateString('ko-KR', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </span>
+                            <span>관리자</span>
+                          </div>
+                        </div>
+                        <button
+                          className="ml-4 text-hotel-sky hover:text-hotel-teal transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleNotice(notice.id);
+                          }}
+                        >
+                          {isExpanded ? '▲' : '▼'}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

@@ -56,14 +56,6 @@ public class BookingController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteBooking(
-            @PathVariable Long id,
-            HttpServletRequest httpRequest) {
-        String userId = getUserIdFromRequest(httpRequest);
-        bookingService.deleteBooking(id, userId);
-        return ResponseEntity.ok().build();
-    }
 
     private String getUserIdFromRequest(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");

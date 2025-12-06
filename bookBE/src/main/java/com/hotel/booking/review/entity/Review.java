@@ -43,6 +43,16 @@ public class Review {
     @Column(length = 1000)
     private String comment; // 리뷰 내용
 
+    @Column(name = "is_public", nullable = false)
+    @Builder.Default
+    private Boolean isPublic = true;
+
+    @Column(name = "admin_reply", length = 1000)
+    private String adminReply;
+
+    @Column(name = "admin_reply_date")
+    private LocalDateTime adminReplyDate;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

@@ -41,11 +41,13 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    // CASCADE 제거: 사용자 삭제 시 예약은 보존 (과거 예약/결제 내역 보존 필요)
+    @OneToMany(mappedBy = "user")
     @Builder.Default
     private List<Booking> bookings = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    // CASCADE 제거: 사용자 삭제 시 리뷰는 보존 (객실 리뷰 데이터 보존 필요)
+    @OneToMany(mappedBy = "user")
     @Builder.Default
     private List<Review> reviews = new ArrayList<>();
 

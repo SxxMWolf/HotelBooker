@@ -16,6 +16,11 @@ import java.util.List;
 public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByUser(User user);
     
+    /**
+     * 특정 객실의 날짜 범위가 겹치는 예약을 조회
+     * 날짜 범위 겹침 조건: (checkInDate < checkOutDate) AND (checkOutDate > checkInDate)
+     * 예: 예약 A (12/10~12/12)와 예약 B (12/11~12/13)는 겹침
+     */
     @Query("SELECT b FROM Booking b WHERE b.room = :room " +
            "AND b.checkInDate < :checkOutDate AND b.checkOutDate > :checkInDate")
     List<Booking> findByRoomAndCheckInDateAndCheckOutDate(
@@ -26,5 +31,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByStatusAndCreatedAtBefore(Booking.BookingStatus status, LocalDateTime createdAt);
     
     List<Booking> findByStatusAndCheckOutDateBefore(Booking.BookingStatus status, LocalDate checkOutDate);
+    
+    List<Booking> findByRoomAndStatus(Room room, Booking.BookingStatus status);
 }
 

@@ -122,7 +122,7 @@ const Booking = () => {
                 min="1"
                 max={room.capacity}
                 value={guests}
-                onChange={(e) => setGuests(e.target.value)}
+                onChange={(e) => setGuests(parseInt(e.target.value) || 1)}
                 className="w-full px-3 py-2 border border-hotel-pale rounded-md focus:outline-none focus:ring-2 focus:ring-hotel-sky focus:border-hotel-sky text-hotel-dark transition-all"
               />
             </div>

@@ -36,6 +36,11 @@ spring:
             enable: true
             required: true
 
+# JWT Configuration
+jwt:
+  secret: mySecretKeyForJWTTokenGeneration12345678901234567890
+  expiration: 2592000000  # 30 days (30 * 24 * 60 * 60 * 1000 milliseconds)
+
 # SpringDoc OpenAPI Configuration
 springdoc:
   api-docs:

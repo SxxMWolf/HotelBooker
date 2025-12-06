@@ -35,20 +35,21 @@ public class ReviewService {
             throw new RuntimeException("리뷰를 작성할 권한이 없습니다");
         }
 
-        if (booking.getStatus() != Booking.BookingStatus.COMPLETED) {
-            throw new RuntimeException("완료된 예약에만 리뷰를 작성할 수 있습니다");
-        }
-
         if (reviewRepository.existsByBookingId(booking.getId())) {
             throw new RuntimeException("이미 리뷰를 작성한 예약입니다");
         }
 
-        // 체크아웃 후 1달 이내인지 확인
+        // 취소된 예약은 리뷰 작성 불가
+        if (booking.getStatus() == Booking.BookingStatus.CANCELLED) {
+            throw new RuntimeException("취소된 예약은 리뷰를 작성할 수 없습니다");
+        }
+
+        // 리뷰 가능 여부 판단: 날짜 기반 (체크아웃 후) + 상태 확인 (취소 아님)
         LocalDate today = LocalDate.now();
         LocalDate oneMonthAgo = today.minusMonths(1);
         LocalDate checkOutDate = booking.getCheckOutDate();
         
-        if (checkOutDate.isAfter(today)) {
+        if (!checkOutDate.isBefore(today)) {
             throw new RuntimeException("체크아웃 후에만 리뷰를 작성할 수 있습니다");
         }
         
@@ -116,6 +117,9 @@ public class ReviewService {
                 .rating(review.getRating())
                 .title(review.getTitle())
                 .comment(review.getComment())
+                .isPublic(review.getIsPublic())
+                .adminReply(review.getAdminReply())
+                .adminReplyDate(review.getAdminReplyDate())
                 .createdAt(review.getCreatedAt())
                 .build();
     }

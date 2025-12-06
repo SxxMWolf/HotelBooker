@@ -28,6 +28,10 @@ public class NoticeService {
                 .title(notice.getTitle())
                 .content(notice.getContent())
                 .important(notice.getImportant())
+                .type(notice.getType())
+                .isPublic(notice.getIsPublic())
+                .startDate(notice.getStartDate())
+                .endDate(notice.getEndDate())
                 .createdAt(notice.getCreatedAt())
                 .updatedAt(notice.getUpdatedAt())
                 .build();

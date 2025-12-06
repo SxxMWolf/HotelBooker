@@ -42,8 +42,9 @@ public class BookingService {
         Room room = roomRepository.findById(request.getRoomId())
                 .orElseThrow(() -> new RuntimeException("객실을 찾을 수 없습니다"));
 
+        // 객실 활성화 여부 체크 (available = false면 예약 불가)
         if (!room.getAvailable()) {
-            throw new RuntimeException("예약 가능한 객실이 아닙니다");
+            throw new RuntimeException("비활성화된 객실입니다. 예약할 수 없습니다");
         }
 
         // 날짜 검증
@@ -52,11 +53,17 @@ public class BookingService {
             throw new RuntimeException("체크아웃 날짜는 체크인 날짜보다 이후여야 합니다");
         }
 
-        // 중복 예약 확인
-        List<Room> availableRooms = roomRepository.findAvailableRooms(
-                request.getCheckInDate(), request.getCheckOutDate());
-        if (!availableRooms.contains(room)) {
-            throw new RuntimeException("선택한 날짜에 예약 가능한 객실이 아닙니다");
+        // 중복 예약 확인 (같은 객실의 같은 날짜 범위에 예약이 있는지 체크)
+        // 취소되지 않은 예약 중에서 날짜 범위가 겹치는 예약이 있는지 확인
+        List<Booking> overlappingBookings = bookingRepository.findByRoomAndCheckInDateAndCheckOutDate(
+                room, request.getCheckInDate(), request.getCheckOutDate());
+        
+        // 취소되지 않은 예약이 있는지 확인
+        boolean hasOverlap = overlappingBookings.stream()
+                .anyMatch(b -> b.getStatus() != Booking.BookingStatus.CANCELLED);
+        
+        if (hasOverlap) {
+            throw new RuntimeException("선택한 날짜에 이미 예약이 있습니다. 다른 날짜를 선택해주세요.");
         }
 
         // 총 가격 계산
@@ -81,7 +88,7 @@ public class BookingService {
         Payment payment = Payment.builder()
                 .amount(totalPrice)
                 .method(request.getMethod())
-                .status(Payment.PaymentStatus.COMPLETED)
+                .status(Payment.PaymentStatus.PAID)
                 .paymentDate(java.time.LocalDateTime.now())
                 .transactionId(java.util.UUID.randomUUID().toString())
                 .build();
@@ -104,7 +111,6 @@ public class BookingService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
         return bookingRepository.findByUser(user).stream()
-                .filter(booking -> booking.getStatus() != Booking.BookingStatus.DELETED)
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -118,11 +124,14 @@ public class BookingService {
         LocalDate oneMonthAgo = today.minusMonths(1);
         
         return bookingRepository.findByUser(user).stream()
-                .filter(booking -> booking.getStatus() == Booking.BookingStatus.COMPLETED)
                 .filter(booking -> {
+                    // 취소된 예약은 리뷰 작성 불가
+                    if (booking.getStatus() == Booking.BookingStatus.CANCELLED) {
+                        return false;
+                    }
+                    // 리뷰 가능 여부 판단: 날짜 기반 (체크아웃 후) + 상태 확인 (취소 아님)
                     LocalDate checkOutDate = booking.getCheckOutDate();
-                    // 체크아웃 날짜가 오늘 이전이고, 1달 이내인 경우
-                    return !checkOutDate.isAfter(today) && !checkOutDate.isBefore(oneMonthAgo);
+                    return checkOutDate.isBefore(today) && !checkOutDate.isBefore(oneMonthAgo);
                 })
                 .filter(booking -> !reviewRepository.existsByBookingId(booking.getId()))
                 .map(this::convertToDTO)
@@ -154,9 +163,18 @@ public class BookingService {
             throw new RuntimeException("이미 취소된 예약입니다");
         }
         
-        if (booking.getStatus() != Booking.BookingStatus.CONFIRMED && 
-            booking.getStatus() != Booking.BookingStatus.COMPLETED) {
-            throw new RuntimeException("확정되거나 완료된 예약만 취소할 수 있습니다");
+        // 체크인 일주일 전까지만 취소 가능 (CONFIRMED 상태만)
+        if (booking.getStatus() != Booking.BookingStatus.CONFIRMED) {
+            throw new RuntimeException("체크인 전 예약만 취소할 수 있습니다");
+        }
+        
+        // 체크인 날짜로부터 7일 이상 남아있어야 취소 가능
+        LocalDate today = LocalDate.now();
+        LocalDate checkInDate = booking.getCheckInDate();
+        long daysUntilCheckIn = java.time.temporal.ChronoUnit.DAYS.between(today, checkInDate);
+        
+        if (daysUntilCheckIn < 7) {
+            throw new RuntimeException("체크인 일주일 전까지만 취소할 수 있습니다");
         }
         
         // 예약 취소 시 해당 예약과 연결된 리뷰 삭제
@@ -176,23 +194,6 @@ public class BookingService {
         bookingRepository.save(booking);
     }
 
-    @Transactional
-    public void deleteBooking(Long id, String userId) {
-        Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("예약을 찾을 수 없습니다"));
-        
-        if (!booking.getUser().getId().equals(userId)) {
-            throw new RuntimeException("예약을 삭제할 권한이 없습니다");
-        }
-        
-        if (booking.getStatus() != Booking.BookingStatus.CANCELLED) {
-            throw new RuntimeException("취소된 예약만 삭제할 수 있습니다");
-        }
-        
-        // 소프트 삭제: 상태를 DELETED로 변경 (데이터 보존)
-        booking.setStatus(Booking.BookingStatus.DELETED);
-        bookingRepository.save(booking);
-    }
 
     private BookingDTO convertToDTO(Booking booking) {
         // 결제 정보 조회
@@ -214,6 +215,7 @@ public class BookingService {
         return BookingDTO.builder()
                 .id(booking.getId())
                 .userId(booking.getUser().getId())
+                .userName(booking.getUser().getNickname())
                 .roomId(booking.getRoom().getId())
                 .roomName(booking.getRoom().getName())
                 .checkInDate(booking.getCheckInDate())
@@ -221,6 +223,7 @@ public class BookingService {
                 .guests(booking.getGuests())
                 .totalPrice(booking.getTotalPrice())
                 .status(booking.getStatus())
+                .specialRequests(booking.getSpecialRequests())
                 .createdAt(booking.getCreatedAt())
                 .payment(paymentDTO)
                 .build();

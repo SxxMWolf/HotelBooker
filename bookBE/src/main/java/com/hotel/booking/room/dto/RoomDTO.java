@@ -1,5 +1,6 @@
 package com.hotel.booking.room.dto;
 
+import com.hotel.booking.room.entity.Room;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +20,7 @@ public class RoomDTO {
     private Integer capacity;
     private BigDecimal pricePerNight;
     private Boolean available;
+    private Room.RoomStatus status;
     private String imageUrl;
     private Double averageRating;
     private Integer reviewCount;

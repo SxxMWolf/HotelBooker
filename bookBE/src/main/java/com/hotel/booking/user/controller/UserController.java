@@ -32,7 +32,8 @@ public class UserController {
                 userId,
                 request.getEmail(),
                 request.getNickname(),
-                request.getPassword()
+                request.getPassword(),
+                request.getCurrentPassword()
         ));
     }
 

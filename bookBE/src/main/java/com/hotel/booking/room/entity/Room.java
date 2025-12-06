@@ -42,6 +42,14 @@ public class Room {
     @Builder.Default
     private Boolean available = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private RoomStatus status = RoomStatus.CLEAN;
+
+    @Column(name = "status_updated_at")
+    private java.time.LocalDateTime statusUpdatedAt;  // 상태 변경 시간 (자동 청소 완료용)
+
     @Column
     private String imageUrl;
 
@@ -51,12 +59,18 @@ public class Room {
     @Column
     private Integer bedCount; // 침대 개수
 
-    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
+    // CASCADE 제거: 객실 삭제 시 예약은 보존 (과거 예약 내역 보존 필요)
+    @OneToMany(mappedBy = "room")
     @Builder.Default
     private List<Booking> bookings = new ArrayList<>();
 
-    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
+    // CASCADE 제거: 객실 삭제 시 리뷰는 보존 (객실 리뷰 데이터 보존 필요)
+    @OneToMany(mappedBy = "room")
     @Builder.Default
     private List<Review> reviews = new ArrayList<>();
+
+    public enum RoomStatus {
+        CLEAN, DIRTY, MAINTENANCE
+    }
 }
 

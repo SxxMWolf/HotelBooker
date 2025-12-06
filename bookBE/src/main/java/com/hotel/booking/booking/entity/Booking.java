@@ -49,10 +49,14 @@ public class Booking {
     @Builder.Default
     private BookingStatus status = BookingStatus.CONFIRMED;
 
+    @Column(name = "special_requests", length = 1000)
+    private String specialRequests;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL)
+    // CASCADE 제거: 예약 삭제 시 결제는 보존 (결제는 법적 증빙 자료이므로 절대 삭제되면 안 됨)
+    @OneToOne(mappedBy = "booking")
     private Payment payment;
 
     @PrePersist
@@ -61,7 +65,7 @@ public class Booking {
     }
 
     public enum BookingStatus {
-        CONFIRMED, CANCELLED, COMPLETED, DELETED
+        CONFIRMED, CANCELLED, CHECKED_IN, CHECKED_OUT
     }
 }
 

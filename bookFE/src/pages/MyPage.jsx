@@ -84,8 +84,7 @@ const MyPage = () => {
     try {
       const updateData = {
         email: formData.email,
-        name: formData.name,
-        phone: formData.phone,
+        nickname: formData.name,
         ...(formData.password && { password: formData.password }),
       };
       await userAPI.updateProfile(updateData);
@@ -108,16 +107,6 @@ const MyPage = () => {
     }
   };
 
-  const handleDeleteBooking = async (bookingId) => {
-    if (!confirm('정말 예약 내역을 삭제하시겠습니까?\n삭제된 예약 내역은 복구할 수 없습니다.')) return;
-    try {
-      await bookingAPI.delete(bookingId);
-      fetchData();
-      alert('예약 내역이 삭제되었습니다.');
-    } catch (error) {
-      alert(error.response?.data?.message || '예약 내역 삭제에 실패했습니다.');
-    }
-  };
 
   const handleOpenReviewForm = (booking) => {
     setSelectedBooking(booking);
@@ -412,8 +401,9 @@ const MyPage = () => {
                 today.setHours(0, 0, 0, 0);
                 const isPast = checkOutDate < today;
                 const checkInDate = new Date(booking.checkInDate);
+                checkInDate.setHours(0, 0, 0, 0);
                 const daysUntilCheckIn = Math.ceil((checkInDate - today) / (1000 * 60 * 60 * 24));
-                const isOneWeekOrMore = daysUntilCheckIn >= 7;
+                const canCancel = checkInDate > today && daysUntilCheckIn >= 7; // 체크인 일주일 전까지만 취소 가능
                 
                 const isCancelled = booking.status === 'CANCELLED';
                 const isDisabled = isPast || isCancelled;
@@ -454,13 +444,13 @@ const MyPage = () => {
                           ₩{booking.totalPrice.toLocaleString()}
                         </p>
                         {booking.status === 'CANCELLED' && (
-                          <p className="text-red-600 text-sm mt-2 font-medium">
+                          <p className="text-gray-600 text-sm mt-2 font-medium">
                             취소됨
                           </p>
                         )}
                       </div>
                       <div className="flex gap-2">
-                        {booking.status === 'COMPLETED' && isPast && (
+                        {isPast && (
                           <button
                             onClick={() => handleOpenReviewForm(booking)}
                             className="px-4 py-2 bg-hotel-teal text-white rounded-lg hover:bg-hotel-cyan font-semibold shadow-lg transition-all"
@@ -468,15 +458,7 @@ const MyPage = () => {
                             리뷰 작성
                           </button>
                         )}
-                        {booking.status === 'CANCELLED' && (
-                          <button
-                            onClick={() => handleDeleteBooking(booking.id)}
-                            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 font-semibold shadow-lg transition-all"
-                          >
-                            예약 내역 삭제
-                          </button>
-                        )}
-                        {(booking.status === 'CONFIRMED' || booking.status === 'COMPLETED') && isOneWeekOrMore && !isPast && (
+                        {booking.status === 'CONFIRMED' && canCancel && (
                           <button
                             onClick={() => handleCancelBooking(booking.id)}
                             className="px-4 py-2 bg-white text-red-500 border border-red-500 rounded-lg hover:bg-red-50 font-semibold transition-all"
@@ -501,11 +483,13 @@ const MyPage = () => {
             <p className="text-hotel-cyan text-center py-8">결제 내역이 없습니다.</p>
           ) : (
             <div className="space-y-4">
-              {payments.map((payment) => {
-                const relatedBooking = bookings.find(b => b.id === payment.bookingId);
-                const isCancelled = relatedBooking?.status === 'CANCELLED';
-                const showRefundPending = isCancelled && payment.status === 'COMPLETED';
-                
+              {[...payments]
+                .sort((a, b) => {
+                  const dateA = new Date(a.paymentDate || 0);
+                  const dateB = new Date(b.paymentDate || 0);
+                  return dateB - dateA; // 최신순 (내림차순)
+                })
+                .map((payment) => {
                 return (
                 <div 
                   key={payment.id} 
@@ -527,18 +511,14 @@ const MyPage = () => {
                     </div>
                     <span
                       className={`text-sm font-medium ${
-                        showRefundPending
-                          ? 'text-red-600'
-                          : payment.status === 'COMPLETED'
+                        payment.status === 'PAID'
                           ? 'text-hotel-teal'
                           : payment.status === 'REFUNDED'
-                          ? 'bg-red-100 text-red-800 border border-red-300 px-3 py-1 rounded-lg'
+                          ? 'text-red-600'
                           : 'bg-yellow-100 text-yellow-800 border border-yellow-300 px-3 py-1 rounded-lg'
                       }`}
                     >
-                      {showRefundPending
-                        ? '환불 대기 중'
-                        : payment.status === 'COMPLETED' 
+                      {payment.status === 'PAID' 
                         ? '완료' 
                         : payment.status === 'REFUNDED'
                         ? '환불'
@@ -768,18 +748,14 @@ const MyPage = () => {
                 </label>
                 <span
                   className={`text-sm font-medium ${
-                    selectedBooking?.status === 'CANCELLED' && selectedPayment.status === 'COMPLETED'
-                      ? 'text-red-600'
-                      : selectedPayment.status === 'COMPLETED'
+                    selectedPayment.status === 'PAID'
                       ? 'text-hotel-teal'
                       : selectedPayment.status === 'REFUNDED'
-                      ? 'bg-red-100 text-red-800 border border-red-300 inline-block px-3 py-1 rounded-lg'
+                      ? 'text-red-600'
                       : 'bg-yellow-100 text-yellow-800 border border-yellow-300 inline-block px-3 py-1 rounded-lg'
                   }`}
                 >
-                  {selectedBooking?.status === 'CANCELLED' && selectedPayment.status === 'COMPLETED'
-                    ? '환불 대기 중'
-                    : selectedPayment.status === 'COMPLETED' 
+                  {selectedPayment.status === 'PAID' 
                     ? '완료' 
                     : selectedPayment.status === 'REFUNDED'
                     ? '환불'
