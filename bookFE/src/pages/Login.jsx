@@ -16,8 +16,7 @@ const Login = () => {
     const result = await login(id, password);
     if (result.success) {
       // 관리자면 관리자 대시보드로, 일반 사용자면 홈으로
-      const userData = JSON.parse(localStorage.getItem('user'));
-      if (userData?.role === 'ADMIN') {
+      if (result.role === 'ADMIN') {
         navigate('/admin');
       } else {
         navigate('/');

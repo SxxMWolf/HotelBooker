@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
-        return { success: true };
+        return { success: true, role: data.role };
       }
       return { success: false, error: response.data.message || '로그인에 실패했습니다' };
     } catch (error) {
